@@ -108,7 +108,7 @@ class SearchApp(QWidget):
 
     def search_reference(self):
         """ Busca la referencia o rango de fechas ingresado y muestra los resultados """
-        reference = self.reference_input.text().strip().upper()
+        reference = "ALMI"+self.reference_input.text().strip().upper()
         start_date_text = self.start_date.text().strip()
         end_date_text = self.end_date.text().strip()
 
