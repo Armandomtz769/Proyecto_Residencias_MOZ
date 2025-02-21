@@ -1,7 +1,7 @@
 import sys
-from PySide6.QtCore import Qt, QDate
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import (
+from PySide6.QtCore import Qt, QDate # type: ignore
+from PySide6.QtGui import QFont # type: ignore
+from PySide6.QtWidgets import ( # type: ignore
     QApplication, QWidget, QVBoxLayout, QLabel, QHBoxLayout, 
     QTableWidget, QTableWidgetItem, QPushButton, QHeaderView, 
     QSizePolicy, QStackedWidget, QLineEdit, QCalendarWidget, 
@@ -221,6 +221,7 @@ class MainApp(QWidget):
             ("ALMI2A-01689", "K-FLEX DE MEXICO", "20/04/2024"),
             ("ALMI24-02092", "VILLARREAL DIVISION", "05/05/2024"),
             ("ALMI25-00030", "ACERO PRIME", "12/06/2024"),
+            ("ALMI25-00031", "ACERO PRIME remix", "12/06/2024"),
             ("ALMI24-02054", "COMERCIALIZADORA GARTREND", "18/07/2024"),
             ("ALMI24-02099", "PROTEINA ANIMAL", "22/08/2024"),
             ("ALMI24-02084", "OPP FILM MEXICO", "30/09/2024")

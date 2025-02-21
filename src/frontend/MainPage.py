@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import (
+from PySide6.QtWidgets import ( # type: ignore
     QApplication, QWidget, QPushButton, QVBoxLayout, QLineEdit, QCalendarWidget,
     QRadioButton, QLabel, QHBoxLayout, QFrame, QButtonGroup
 )
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor # type: ignore
 import sys
 
 class SearchApp(QWidget):
