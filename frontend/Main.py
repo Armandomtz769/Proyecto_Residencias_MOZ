@@ -7,34 +7,8 @@ from PySide6.QtWidgets import ( # type: ignore
     QSizePolicy, QStackedWidget, QLineEdit, QCalendarWidget, 
     QRadioButton, QFrame, QButtonGroup, QMessageBox
 )
-
-class ReferenceDetails(QWidget):
-    """ Ventana externa para mostrar detalles de un pedimento """
-    def __init__(self, referencia, empresa, fecha):
-        super().__init__()
-        self.setWindowTitle(f"Detalles - {referencia}")
-        self.setGeometry(150, 150, 300, 200)
-
-        layout = QVBoxLayout()
-
-        title_label = QLabel(f"Referencia: {referencia}")
-        title_label.setFont(QFont("Arial", 14, QFont.Bold))
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        empresa_label = QLabel(f"Empresa: {empresa}")
-        empresa_label.setFont(QFont("Arial", 12))
-        empresa_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        fecha_label = QLabel(f"Fecha: {fecha}")
-        fecha_label.setFont(QFont("Arial", 12))
-        fecha_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(title_label)
-        layout.addWidget(empresa_label)
-        layout.addWidget(fecha_label)
-
-        self.setLayout(layout)
-
+from ShipmentsList import PedimentosTable
+from ShipmentDetails import ReferenceDetails
 class SearchApp(QWidget):
     """ Pantalla de búsqueda de pedimentos """
     def __init__(self, stacked_widget, data):
@@ -146,63 +120,6 @@ class SearchApp(QWidget):
         self.stacked_widget.addWidget(self.results_screen)
         self.stacked_widget.setCurrentWidget(self.results_screen)
 
-class PedimentosTable(QWidget):
-    """ Pantalla de la tabla de Pedimentos """
-    def __init__(self, stacked_widget, data):
-        super().__init__()
-        self.stacked_widget = stacked_widget
-
-        layout = QVBoxLayout()
-
-        # Barra superior con botón de regreso
-        header_layout = QHBoxLayout()
-        back_button = QPushButton("←")
-        back_button.setFixedSize(40, 40)
-        back_button.clicked.connect(self.go_back)
-
-        title_label = QLabel("Resultados de Búsqueda")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        header_layout.addWidget(back_button)
-        header_layout.addStretch(1)
-        header_layout.addWidget(title_label)
-        header_layout.addStretch(1)
-
-        layout.addLayout(header_layout)
-
-        # Tabla de Pedimentos
-        self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Número de Referencia", "Empresa", "Fecha"])
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.verticalHeader().setVisible(False)
-
-        self.table.setRowCount(len(data))
-        font_big = QFont("Arial", 12, QFont.Bold)
-        font_small = QFont("Arial", 10)
-
-        for row, (pedimento, empresa, fecha) in enumerate(data):
-            item_pedimento = QTableWidgetItem(pedimento)
-            item_pedimento.setFont(font_big)
-
-            item_empresa = QTableWidgetItem(empresa)
-            item_empresa.setFont(font_small)
-
-            item_fecha = QTableWidgetItem(fecha)
-            item_fecha.setFont(font_small)
-
-            self.table.setItem(row, 0, item_pedimento)
-            self.table.setItem(row, 1, item_empresa)
-            self.table.setItem(row, 2, item_fecha)
-
-        layout.addWidget(self.table)
-        self.setLayout(layout)
-
-    def go_back(self):
-        """ Regresa a la pantalla de búsqueda """
-        self.stacked_widget.setCurrentIndex(0)
-
 class MainApp(QWidget):
     """ Contenedor principal con QStackedWidget para manejar las pantallas """
     def __init__(self):
@@ -229,13 +146,14 @@ class MainApp(QWidget):
 
         self.stacked_widget = QStackedWidget()
         self.search_screen = SearchApp(self.stacked_widget, self.data)
-        self.results_screen = PedimentosTable(self.stacked_widget, self.data)
+        # self.results_screen = PedimentosTable(self.stacked_widget, self.data)
 
         self.stacked_widget.addWidget(self.search_screen)
-        self.stacked_widget.addWidget(self.results_screen)
+        # self.stacked_widget.addWidget(self.results_screen)
 
         layout.addWidget(self.stacked_widget)
         self.setLayout(layout)
+
 
 def main():
     app = QApplication(sys.argv)
