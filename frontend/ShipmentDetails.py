@@ -1,37 +1,44 @@
-import sys
-from PySide6.QtCore import Qt, QDate # type: ignore
-from PySide6.QtGui import QFont # type: ignore
-from PySide6.QtWidgets import ( # type: ignore
-    QApplication, QWidget, QVBoxLayout, QLabel, QHBoxLayout, 
-    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView, 
-    QSizePolicy, QStackedWidget, QLineEdit, QCalendarWidget, 
-    QRadioButton, QFrame, QButtonGroup, QMessageBox
-)
+from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
 
 
-class ReferenceDetails(QWidget):
-    """ Ventana externa para mostrar detalles de un pedimento """
-    def __init__(self, referencia, empresa, fecha):
-        super().__init__()
-        self.setWindowTitle(f"Detalles - {referencia}")
-        self.setGeometry(150, 150, 300, 200)
+class ReferenceDetails(Screen):
+    """ Pantalla para mostrar detalles de un pedimento """
 
-        layout = QVBoxLayout()
+    def __init__(self, referencia="", empresa="", fecha="", **kwargs):
+        super().__init__(**kwargs)
+        self.referencia = referencia
+        self.empresa = empresa
+        self.fecha = fecha
 
-        title_label = QLabel(f"Referencia: {referencia}")
-        title_label.setFont(QFont("Arial", 14, QFont.Bold))
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout = BoxLayout(orientation="vertical", padding=20, spacing=10)
 
-        empresa_label = QLabel(f"Empresa: {empresa}")
-        empresa_label.setFont(QFont("Arial", 12))
-        empresa_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title_label = Label(text=f"Referencia: {self.referencia}", font_size=18, bold=True)
+        self.empresa_label = Label(text=f"Empresa: {self.empresa}", font_size=16)
+        self.fecha_label = Label(text=f"Fecha: {self.fecha}", font_size=16)
 
-        fecha_label = QLabel(f"Fecha: {fecha}")
-        fecha_label.setFont(QFont("Arial", 12))
-        fecha_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.add_widget(self.title_label)
+        layout.add_widget(self.empresa_label)
+        layout.add_widget(self.fecha_label)
 
-        layout.addWidget(title_label)
-        layout.addWidget(empresa_label)
-        layout.addWidget(fecha_label)
+        # Botón para regresar
+        self.back_button = Button(text="Volver", size_hint=(1, 0.2))
+        self.back_button.bind(on_press=self.go_back)
+        layout.add_widget(self.back_button)
 
-        self.setLayout(layout)
+        self.add_widget(layout)
+
+    def load_details(self, referencia, empresa, fecha):
+        """ Carga los detalles en la pantalla """
+        self.referencia = referencia
+        self.empresa = empresa
+        self.fecha = fecha
+        self.title_label.text = f"Referencia: {self.referencia}"
+        self.empresa_label.text = f"Empresa: {self.empresa}"
+        self.fecha_label.text = f"Fecha: {self.fecha}"
+
+    def go_back(self, instance):
+        """ Regresa a la pantalla anterior """
+        self.manager.current = "results"  # Regresa a la pantalla de resultados

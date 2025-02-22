@@ -1,66 +1,49 @@
-import sys
-from PySide6.QtCore import Qt, QDate # type: ignore
-from PySide6.QtGui import QFont # type: ignore
-from PySide6.QtWidgets import ( # type: ignore
-    QApplication, QWidget, QVBoxLayout, QLabel, QHBoxLayout, 
-    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView, 
-    QSizePolicy, QStackedWidget, QLineEdit, QCalendarWidget, 
-    QRadioButton, QFrame, QButtonGroup, QMessageBox
-)
+from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from kivy.uix.listview import ListView, ListAdapter
+from kivy.uix.listview import ListItemButton
 
-class PedimentosTable(QWidget):
+
+class PedimentosTable(Screen):
     """ Pantalla de la tabla de Pedimentos """
-    def __init__(self, stacked_widget, data):
-        super().__init__()
-        self.stacked_widget = stacked_widget
 
-        layout = QVBoxLayout()
+    def __init__(self, data=None, **kwargs):
+        super().__init__(**kwargs)
+        self.data = data if data else []
+
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
 
         # Barra superior con botón de regreso
-        header_layout = QHBoxLayout()
-        back_button = QPushButton("←")
-        back_button.setFixedSize(40, 40)
-        back_button.clicked.connect(self.go_back)
+        header_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
 
-        title_label = QLabel("Resultados de Búsqueda")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.back_button = Button(text="←", size_hint_x=0.2)
+        self.back_button.bind(on_press=self.go_back)
 
-        header_layout.addWidget(back_button)
-        header_layout.addStretch(1)
-        header_layout.addWidget(title_label)
-        header_layout.addStretch(1)
+        self.title_label = Label(text="Resultados de Búsqueda", size_hint_x=0.8, font_size=18, bold=True)
 
-        layout.addLayout(header_layout)
+        header_layout.add_widget(self.back_button)
+        header_layout.add_widget(self.title_label)
 
-        # Tabla de Pedimentos
-        self.table = QTableWidget()
-        self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["Número de Referencia", "Empresa", "Fecha"])
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.verticalHeader().setVisible(False)
+        layout.add_widget(header_layout)
 
-        self.table.setRowCount(len(data))
-        font_big = QFont("Arial", 12, QFont.Bold)
-        font_small = QFont("Arial", 10)
+        # Lista de Pedimentos
+        self.list_view = ListView(size_hint_y=0.9)
+        self.list_adapter = ListAdapter(
+            data=[f"{item[0]} - {item[1]} - {item[2]}" for item in self.data],
+            cls=ListItemButton,
+            args_converter=self.args_converter
+        )
+        self.list_view.adapter = self.list_adapter
 
-        for row, (pedimento, empresa, fecha) in enumerate(data):
-            item_pedimento = QTableWidgetItem(pedimento)
-            item_pedimento.setFont(font_big)
+        layout.add_widget(self.list_view)
+        self.add_widget(layout)
 
-            item_empresa = QTableWidgetItem(empresa)
-            item_empresa.setFont(font_small)
+    def args_converter(self, row_index, item):
+        """ Convierte los datos para mostrarlos en la lista """
+        return {'text': item, 'size_hint_y': None, 'height': 40}
 
-            item_fecha = QTableWidgetItem(fecha)
-            item_fecha.setFont(font_small)
-
-            self.table.setItem(row, 0, item_pedimento)
-            self.table.setItem(row, 1, item_empresa)
-            self.table.setItem(row, 2, item_fecha)
-
-        layout.addWidget(self.table)
-        self.setLayout(layout)
-
-    def go_back(self):
+    def go_back(self, instance):
         """ Regresa a la pantalla de búsqueda """
-        self.stacked_widget.setCurrentIndex(0)
+        self.manager.current = "search"

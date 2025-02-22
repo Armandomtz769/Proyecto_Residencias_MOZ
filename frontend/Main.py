@@ -1,137 +1,115 @@
-import sys
-from PySide6.QtCore import Qt, QDate # type: ignore
-from PySide6.QtGui import QFont # type: ignore
-from PySide6.QtWidgets import ( # type: ignore
-    QApplication, QWidget, QVBoxLayout, QLabel, QHBoxLayout, 
-    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView, 
-    QSizePolicy, QStackedWidget, QLineEdit, QCalendarWidget, 
-    QRadioButton, QFrame, QButtonGroup, QMessageBox
-)
+from kivy.app import App
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
+from kivy.uix.calendar import CalendarWidget
+from kivy.uix.radio import RadioButton
+from kivy.uix.popup import Popup
 from ShipmentsList import PedimentosTable
-from ShipmentDetails import ReferenceDetails
-class SearchApp(QWidget):
-    """ Pantalla de búsqueda de pedimentos """
-    def __init__(self, stacked_widget, data):
-        super().__init__()
-        self.stacked_widget = stacked_widget
-        self.data = data  # Datos de pedimentos
-        self.setWindowTitle("Búsqueda de Pedimentos")
 
-        layout = QVBoxLayout()
+class SearchScreen(Screen):
+    """ Pantalla de búsqueda de pedimentos """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
 
         # Búsqueda por Fecha
-        self.date_frame = QFrame()
-        date_layout = QVBoxLayout()
+        self.date_radio = RadioButton(group='search_type', text='Búsqueda por fecha')
+        self.date_radio.bind(on_press=self.toggle_calendar)
+        layout.add_widget(self.date_radio)
 
-        self.date_radio = QRadioButton("Búsqueda por fecha")
-        self.date_radio.setChecked(True)
-        self.date_radio.toggled.connect(self.toggle_calendar)
-        date_layout.addWidget(self.date_radio)
+        self.start_date = TextInput(hint_text="Inicio: dd/mm/aaaa", multiline=False)
+        layout.add_widget(self.start_date)
 
-        self.start_date = QLineEdit()
-        self.start_date.setPlaceholderText("Inicio: dd/mm/aaaa")
-        date_layout.addWidget(self.start_date)
+        self.end_date = TextInput(hint_text="Fin: dd/mm/aaaa", multiline=False)
+        layout.add_widget(self.end_date)
 
-        self.end_date = QLineEdit()
-        self.end_date.setPlaceholderText("Fin: dd/mm/aaaa")
-        date_layout.addWidget(self.end_date)
-
-        self.calendar = QCalendarWidget()
-        self.calendar.clicked.connect(self.set_date)
-        date_layout.addWidget(self.calendar)
-
-        self.date_frame.setLayout(date_layout)
-        layout.addWidget(self.date_frame)
+        self.calendar = CalendarWidget()
+        self.calendar.bind(on_select=self.set_date)
+        layout.add_widget(self.calendar)
 
         # Búsqueda por Referencia
-        self.ref_frame = QFrame()
-        ref_layout = QVBoxLayout()
+        self.ref_radio = RadioButton(group='search_type', text='Búsqueda por referencia')
+        layout.add_widget(self.ref_radio)
 
-        self.ref_radio = QRadioButton("Búsqueda por referencia")
-        ref_layout.addWidget(self.ref_radio)
-
-        self.reference_input = QLineEdit()
-        self.reference_input.setPlaceholderText("Referencia: ALMI24-00000")
-        ref_layout.addWidget(self.reference_input)
-
-        self.ref_frame.setLayout(ref_layout)
-        layout.addWidget(self.ref_frame)
-
-        self.radio_group = QButtonGroup()
-        self.radio_group.addButton(self.date_radio)
-        self.radio_group.addButton(self.ref_radio)
+        self.reference_input = TextInput(hint_text="Referencia: ALMI24-00000", multiline=False)
+        layout.add_widget(self.reference_input)
 
         # Botón de búsqueda
-        self.search_button = QPushButton("Buscar")
-        self.search_button.clicked.connect(self.search_reference)
-        layout.addWidget(self.search_button)
+        self.search_button = Button(text="Buscar", size_hint=(1, 0.2))
+        self.search_button.bind(on_press=self.search_reference)
+        layout.add_widget(self.search_button)
 
-        self.setLayout(layout)
+        self.add_widget(layout)
 
-    def toggle_calendar(self):
+    def toggle_calendar(self, instance):
         """ Muestra u oculta el calendario según la opción elegida """
-        self.calendar.setVisible(self.date_radio.isChecked())
+        self.calendar.opacity = 1 if self.date_radio.active else 0
+        self.calendar.disabled = not self.date_radio.active
 
-    def set_date(self, date):
+    def set_date(self, instance, date):
         """ Asigna la fecha seleccionada en los campos de texto """
-        if not self.start_date.text():
-            self.start_date.setText(date.toString("dd/MM/yyyy"))
+        if not self.start_date.text:
+            self.start_date.text = date.strftime("%d/%m/%Y")
         else:
-            self.end_date.setText(date.toString("dd/MM/yyyy"))
+            self.end_date.text = date.strftime("%d/%m/%Y")
 
-    def search_reference(self):
+    def search_reference(self, instance):
         """ Busca la referencia o rango de fechas ingresado y muestra los resultados """
-        reference = "ALMI"+self.reference_input.text().strip().upper()
-        start_date_text = self.start_date.text().strip()
-        end_date_text = self.end_date.text().strip()
+        reference = "ALMI" + self.reference_input.text.strip().upper()
+        start_date_text = self.start_date.text.strip()
+        end_date_text = self.end_date.text.strip()
 
-        if self.ref_radio.isChecked() and not reference:
-            QMessageBox.warning(self, "Error", "Por favor, ingrese una referencia.")
+        if self.ref_radio.active and not self.reference_input.text:
+            self.show_popup("Error", "Por favor, ingrese una referencia.")
             return
 
-        if self.date_radio.isChecked():
-            # Verificar que las fechas sean válidas
+        if self.date_radio.active:
             try:
-                start_date = QDate.fromString(start_date_text, "dd/MM/yyyy")
-                end_date = QDate.fromString(end_date_text, "dd/MM/yyyy")
-                if not start_date.isValid() or not end_date.isValid():
+                start_date = start_date_text
+                end_date = end_date_text
+                if not start_date or not end_date:
                     raise ValueError
             except ValueError:
-                QMessageBox.warning(self, "Error", "Las fechas ingresadas no son válidas.")
+                self.show_popup("Error", "Las fechas ingresadas no son válidas.")
                 return
 
-##UIMPORTANTE REVISAR QUE MEJOR SE M<ANDE UN MENSAJE DE QUE  NO ENCONTRO FECHAS CUANDO NO HAY RESULTADOS
             # Filtrar por rango de fechas
-            filtered_data = [item for item in self.data if start_date <= QDate.fromString(item[2], "dd/MM/yyyy") <= end_date]
+            filtered_data = [item for item in self.manager.data if start_date <= item[2] <= end_date]
+            if not filtered_data:
+                self.show_popup("Aviso", "No se encontraron resultados.")
+                return
+
             self.show_results(filtered_data)
             return
 
-        # Buscar la referencia
-        filtered_data = [item for item in self.data if item[0] == reference]
+        # Buscar por referencia
+        filtered_data = [item for item in self.manager.data if item[0] == reference]
         if not filtered_data:
-            QMessageBox.warning(self, "No encontrado", "La referencia no existe en la base de datos.")
+            self.show_popup("No encontrado", "La referencia no existe en la base de datos.")
             return
 
         self.show_results(filtered_data)
 
     def show_results(self, data):
         """ Muestra los resultados de búsqueda en la pantalla de resultados """
-        self.results_screen = PedimentosTable(self.stacked_widget, data)
-        self.stacked_widget.addWidget(self.results_screen)
-        self.stacked_widget.setCurrentWidget(self.results_screen)
+        results_screen = self.manager.get_screen("results")
+        results_screen.load_data(data)
+        self.manager.current = "results"
 
-class MainApp(QWidget):
-    """ Contenedor principal con QStackedWidget para manejar las pantallas """
-    def __init__(self):
-        super().__init__()
+    def show_popup(self, title, message):
+        popup = Popup(title=title, content=Label(text=message), size_hint=(0.8, 0.4))
+        popup.open()
 
-        self.setWindowTitle("Gestión de Pedimentos")
-        self.setGeometry(100, 100, 400, 600)
-        self.setFixedSize(400, 600)
 
-        layout = QVBoxLayout()
+class MainApp(App):
+    """ Contenedor principal con ScreenManager para manejar las pantallas """
 
-        # Datos de ejemplo
+    def build(self):
         self.data = [
             ("ALMI25-00163", "VILLARREAL DIVISION", "01/02/2024"),
             ("ALMI24-01936", "LEVARE SISTEMAS", "15/03/2024"),
@@ -144,22 +122,13 @@ class MainApp(QWidget):
             ("ALMI24-02084", "OPP FILM MEXICO", "30/09/2024")
         ]
 
-        self.stacked_widget = QStackedWidget()
-        self.search_screen = SearchApp(self.stacked_widget, self.data)
-        # self.results_screen = PedimentosTable(self.stacked_widget, self.data)
+        sm = ScreenManager()
+        sm.data = self.data
+        sm.add_widget(SearchScreen(name="search"))
+        sm.add_widget(PedimentosTable(name="results"))  # Resultados de búsqueda
 
-        self.stacked_widget.addWidget(self.search_screen)
-        # self.stacked_widget.addWidget(self.results_screen)
+        return sm
 
-        layout.addWidget(self.stacked_widget)
-        self.setLayout(layout)
-
-
-def main():
-    app = QApplication(sys.argv)
-    window = MainApp()
-    window.show()
-    sys.exit(app.exec())
 
 if __name__ == "__main__":
-    main()
+    MainApp().run()
