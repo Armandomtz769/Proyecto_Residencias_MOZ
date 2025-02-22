@@ -63,7 +63,6 @@ class SearchApp(QWidget):
         date_layout.addWidget(self.end_date)
 
         self.calendar = QCalendarWidget()
-        self.calendar.hide()
         self.calendar.clicked.connect(self.set_date)
         date_layout.addWidget(self.calendar)
 
@@ -127,6 +126,7 @@ class SearchApp(QWidget):
                 QMessageBox.warning(self, "Error", "Las fechas ingresadas no son válidas.")
                 return
 
+##UIMPORTANTE REVISAR QUE MEJOR SE M<ANDE UN MENSAJE DE QUE  NO ENCONTRO FECHAS CUANDO NO HAY RESULTADOS
             # Filtrar por rango de fechas
             filtered_data = [item for item in self.data if start_date <= QDate.fromString(item[2], "dd/MM/yyyy") <= end_date]
             self.show_results(filtered_data)
